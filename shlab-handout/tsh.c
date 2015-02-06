@@ -315,7 +315,7 @@ void sigchld_handler(int sig)
 {
 	int status;	//The status of the job
 	pid_t pid; 	//the child's pid
-	while((pid = waitpid(-1, &status, WNOHANG)) > 0){	//reaping the child
+	while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){	//reaping the child
 		deletejob(jobs, pid);
 	}	
    	return;
