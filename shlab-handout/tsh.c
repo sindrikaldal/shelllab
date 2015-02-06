@@ -188,7 +188,7 @@ void eval(char *cmdline)
     //if it's not, then create a child process to handle the command.
     if(!builtin_cmd(argv)) {
 	if((pid = fork()) == 0) {
-            //dostuff
+            setpgid(0, 0);
             execvp(argv[0], argv);	/* if not a built in command we need to break the command down*/
 	}
 	addjob(jobs, pid, bg ? BG : FG, cmdline);
@@ -335,11 +335,12 @@ void sigint_handler(int sig)
     struct job_t *job;
     job = getjobpid(jobs, pid);
 
-    //kill the foreground job
-    kill(pid, sig);
-    
-    //print out the error message to the user
-    printf("Job [%d] (%d) terminated by signal %d\n", job->jid, job->pid, sig);  
+    //kill the foreground job if one exists and print the error
+    //message to the user.
+    if(pid != 0) {
+	kill(-pid, sig);
+        printf("Job [%d] (%d) terminated by signal %d\n", job->jid, job->pid, sig);
+    }
  
     return;
 }
@@ -351,12 +352,20 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig) 
 {
+    //Retrieve the pid of the foreground job
     pid_t pid = fgpid(jobs);
+
+    //declare the foreground job
     struct job_t *job;
     job = getjobpid(jobs, pid);
-    kill(pid, sig);
-    printf("Job [%d] (%d) stopped by signal %d\n", job->jid, job->pid, sig);
-    
+
+    //if a foreground exists, i stop it with the kill command and print
+    //the erroer message to the user.
+    if(pid != 0) {
+	kill(-pid, sig);
+        printf("Job [%d] (%d) stopped by signal %d\n", job->jid, job->pid, sig);
+    }
+        
     return;
 }
 
