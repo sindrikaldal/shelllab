@@ -174,6 +174,9 @@ int main(int argc, char **argv)
  */
 void eval(char *cmdline) 
 {
+    int bg;
+    char *argv[MAXARGS];
+    bg = parseline(cmdline, argv);
     return;
 }
 
