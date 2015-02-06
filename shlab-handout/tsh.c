@@ -185,6 +185,7 @@ void eval(char *cmdline)
     if(!builtin_cmd(argv)) {
 	if((pid = fork()) == 0) {
             //dostuff
+            execvp(argv[0], argv);	/* if not a built in command we need to brak the command down*/
 	}
     }
     
