@@ -5,10 +5,12 @@
  * 
  * === User information ===
  * Group: NONE
- * User 1: dude13
- * SSN: 1807825919
- * User 2: 
- * SSN: X
+ * User 1: hilmarr13
+ * Name: Hilmar Ragnarsson
+ * SSN: 2310922509
+ * User 2: sindrik13
+ * Name: Sindri Mar Kaldal Sigurjonsson
+ * SSN: 2205922359
  * === End User Information ===
  */
 #include <stdio.h>
@@ -326,6 +328,19 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig) 
 {
+    //Retrieve the pid of the foreground job
+    pid_t pid = fgpid(jobs);
+
+    //initalize a struct job that later is defined as the foreground job
+    struct job_t *job;
+    job = getjobpid(jobs, pid);
+
+    //kill the foreground job
+    kill(pid, sig);
+    
+    //print out the error message to the user
+    printf("Job [%d] (%d) terminated by signal %d", job->jid, job->pid, sig);  
+    exit(0);
     return;
 }
 
