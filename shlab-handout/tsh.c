@@ -319,7 +319,13 @@ void sigchld_handler(int sig)
  	immediatly instead of waiting for the child. The WUNTRACED option requests a status information
 	from stopped processes so that the parent does not wait for them*/
 	while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
-		deletejob(jobs, pid);
+	     if(WIFEXITED(status)){	//if the child is terminated
+	     	deletejob(jobs, pid);
+	     }
+	     //If a child is stopped then the state is changed to ST
+	     else if(WIFSTOPPED(status)){
+		getjobpid(jobs, pid)->state = ST;	
+	     } 
 	}	
    	return;
 }
