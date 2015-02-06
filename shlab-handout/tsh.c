@@ -175,11 +175,18 @@ int main(int argc, char **argv)
 void eval(char *cmdline) 
 {
     int bg;
+    pid_t pid;
     //create the argument array
     char *argv[MAXARGS];
     //breake down the command line argument into the arrray
     bg = parseline(cmdline, argv);
-    builtin_cmd(argv);
+    //check if the command from the user is a built-in command
+    //if it's not, then create a child process to handle the command.
+    if(!builtin_cmd(argv)) {
+	if((pid = fork()) == 0) {
+            //dostuff
+	}
+    }
     
     return;
 }
