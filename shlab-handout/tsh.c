@@ -261,6 +261,8 @@ int builtin_cmd(char **argv)
     if(strcmp(argv[0], "quit") == 0) {
 	//dostuff
 	exit(0);
+    } else if(strcmp(argv[0], "jobs") == 0) {
+	//dostuff	
     }
     return 0;     /* not a builtin command */
 }
