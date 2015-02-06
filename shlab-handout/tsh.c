@@ -315,7 +315,10 @@ void sigchld_handler(int sig)
 {
 	int status;	//The status of the job
 	pid_t pid; 	//the child's pid
-	while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){	//reaping the child
+	/*this while loops reaps the child processes one by one. The WNOHANG option makes waitpid return
+ 	immediatly instead of waiting for the child. The WUNTRACED option requests a status information
+	from stopped processes so that the parent does not wait for them*/
+	while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
 		deletejob(jobs, pid);
 	}	
    	return;
