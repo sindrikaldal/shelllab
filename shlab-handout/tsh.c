@@ -180,13 +180,24 @@ void eval(char *cmdline)
     char *argv[MAXARGS];
     //breake down the command line argument into the arrray
     bg = parseline(cmdline, argv);
+    //get the job structure
+    struct job_t *job;
     //check if the command from the user is a built-in command
     //if it's not, then create a child process to handle the command.
     if(!builtin_cmd(argv)) {
 	if((pid = fork()) == 0) {
             //dostuff
-            execvp(argv[0], argv);	/* if not a built in command we need to brak the command down*/
+            execvp(argv[0], argv);	/* if not a built in command we need to break the command down*/
 	}
+	addjob(jobs, pid, bg ? BG : FG, cmdline);
+	if(!bg){
+	     waitfg(pid);
+	}
+	else{
+	     job = getjobpid(jobs, pid);
+	     printf("[%d] (%d) %s", job->jid, job->pid, cmdline); 
+	}
+	
     }
     
     return;
@@ -280,6 +291,10 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+    struct job_t *job = getjobpid(jobs, pid);
+    while(job->state == FG){	//as long as the job is still a forground job were going to wait.
+	sleep(1);
+    }	
     return;
 }
 
@@ -296,7 +311,12 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig) 
 {
-    return;
+	int status;	//The status of the job
+	pid_t pid; 	//the child's pid
+	while((pid = waitpid(-1, &status, WNOHANG)) > 0){	//reaping the child
+		deletejob(jobs, pid);
+	}	
+   	return;
 }
 
 /* 
