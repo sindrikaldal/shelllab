@@ -273,7 +273,7 @@ int builtin_cmd(char **argv)
 	//dostuff
 	exit(0);
     } else if(strcmp(argv[0], "jobs") == 0) {
-	//dostuff	
+	listjobs(jobs);
     }
     return 0;     /* not a builtin command */
 }
