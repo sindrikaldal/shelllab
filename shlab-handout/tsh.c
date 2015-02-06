@@ -339,7 +339,7 @@ void sigint_handler(int sig)
     kill(pid, sig);
     
     //print out the error message to the user
-    printf("Job [%d] (%d) terminated by signal %d", job->jid, job->pid, sig);  
+    printf("Job [%d] (%d) terminated by signal %d\n", job->jid, job->pid, sig);  
     exit(0);
     return;
 }
