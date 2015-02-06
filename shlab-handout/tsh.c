@@ -277,7 +277,7 @@ int builtin_cmd(char **argv)
     } else if(strcmp(argv[0], "jobs") == 0) {
 	listjobs(jobs);
 	return 1;
-    } else if(strcmp(argv[0], "bg") == 0) {
+    } else if((strcmp(argv[0], "bg") == 0) || (strcmp(argv[0], "fg") == 0 )) {
 	do_bgfg(argv);
 	return 1;
     }
@@ -295,24 +295,50 @@ void do_bgfg(char **argv)
     struct job_t *job;
     if(strcmp(argv[0], "bg") == 0) {
 
- 	//process id
+ 	//If the first item in args is a digit
 	if(isdigit(args[0])) {
 		
 	   //getjobpid(jobs, atoi(argv[1]))->state = BG;
 	}   
 	//a job id
 	else {
+	   //Retrieve the job for the given job id
 	   job = getjobjid(jobs, (args[1] - '0'));
+
+	    //retrieve the pid from the job
 	   pid = job->pid;
+
+	   //resume the process by sending the SIGCONT signal to the process
 	   kill(-pid, SIGCONT);
+	   
+           //Set the process to the background
 	   job->state = BG;
+
+	   //print out the message to the user
 	   printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);	
 	}
 	
     } 
     else {
+	//check if the first argument in args is a digit
+	if(isdigit(args[0])){}
 
-	//do fg stuff
+	//if it's not it's % (job ID)
+	else{
+	  //Retrieve the job for the given job id
+	  job = getjobjid(jobs, (args[1] - '0');
+	  //retrieve the pid from the job
+	  pid = job->pid;
+
+	  //resume the process by sending the SIGCONT signal to the process
+          kill(-pid, SIGCONT);
+
+	  //Bring the process to the foreground
+          job->state = FG;
+	
+	  //Wait while the job is still in the foreground
+	  waitfg(pid);
+	}
     }
 
     return;
