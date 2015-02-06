@@ -178,6 +178,9 @@ void eval(char *cmdline)
 {
     int bg;
     pid_t pid;
+    sigset_t blockMask;
+    sigemptyset(&blockMask);
+    sigaddset(&blockMask, SIGCHLD);
     //create the argument array
     char *argv[MAXARGS];
     //breake down the command line argument into the arrray
@@ -187,11 +190,17 @@ void eval(char *cmdline)
     //check if the command from the user is a built-in command
     //if it's not, then create a child process to handle the command.
     if(!builtin_cmd(argv)) {
+	//block SIGCHLD signals before it forks the child
+	sigprocmask(SIG_BLOCK, &blockMask, NULL);
 	if((pid = fork()) == 0) {
             setpgid(0, 0);
+	    //unblock signals
+	    sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
             execvp(argv[0], argv);	/* if not a built in command we need to break the command down*/
 	}
 	addjob(jobs, pid, bg ? BG : FG, cmdline);
+	//unblock signals after adding a job to jobs.
+	sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
 	if(!bg){
 	     waitfg(pid);
 	}
@@ -326,7 +335,7 @@ void do_bgfg(char **argv)
 	//if it's not it's % (job ID)
 	else{
 	  //Retrieve the job for the given job id
-	  job = getjobjid(jobs, (args[1] - '0');
+	  job = getjobjid(jobs, (args[1] - '0'));
 	  //retrieve the pid from the job
 	  pid = job->pid;
 
@@ -377,6 +386,9 @@ void sigchld_handler(int sig)
 	while((pid = waitpid(-1, &status, WNOHANG | WUNTRACED)) > 0){
 	     if(WIFEXITED(status)){	//if the child is terminated
 	     	deletejob(jobs, pid);
+	     }
+	     if (WIFSIGNALED(status)) { //if child terminated by signal 
+       	        deletejob(jobs,pid);
 	     }
 	     //If a child is stopped then the state is changed to ST
 	     else if(WIFSTOPPED(status)){
