@@ -196,8 +196,6 @@ void eval(char *cmdline)
             setpgid(0, 0);
 	    //unblock signals
 	    sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
-	    signal(SIGINT, SIG_DFL); // TJEKKA A ÞESSU !!!!!!!!
-	    signal(SIGTSTP, SIG_DFL);
 	     /* if not a built in command we need to break the command down*/    
             if(execvp(argv[0], argv) == (-1)) {
 		printf("%s: Command not found\n", argv[0]);
