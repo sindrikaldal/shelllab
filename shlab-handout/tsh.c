@@ -456,15 +456,10 @@ void sigint_handler(int sig)
     //Retrieve the pid of the foreground job
     pid_t pid = fgpid(jobs);
 
-    //initalize a struct job that later is defined as the foreground job
-    struct job_t *job;
-    job = getjobpid(jobs, pid);
-
     //kill the foreground job if one exists and print the error
     //message to the user.
     if(pid != 0) {
 	kill(-pid, sig);
-        printf("Job [%d] (%d) terminated by signal %d\n", job->jid, job->pid, sig);
     }
  
     return;
@@ -480,15 +475,10 @@ void sigtstp_handler(int sig)
     //Retrieve the pid of the foreground job
     pid_t pid = fgpid(jobs);
 
-    //declare the foreground job
-    struct job_t *job;
-    job = getjobpid(jobs, pid);
-
     //if a foreground exists, i stop it with the kill command and print
     //the erroer message to the user.
     if(pid != 0) {
 	kill(-pid, sig);
-        printf("Job [%d] (%d) stopped by signal %d\n", job->jid, job->pid, sig);
     }
         
     return;
