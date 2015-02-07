@@ -357,6 +357,17 @@ void do_bgfg(char **argv)
               printf("(%s): No such process\n", argv[1]);
               return;
            }
+	   //If the job exists
+	   
+	   //retrieve the job pid	
+	   pid = job->pid;
+
+	   //Resume by sending the SIGCONT signal to the process through kill
+	   kill(-pid, SIGCONT);
+
+	   //Change the job state to BG and print it to the user
+	   job->state = BG;
+	   printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
 	   
 	}   
 	//If the first item in the argument list is % it's a jobID
@@ -397,7 +408,17 @@ void do_bgfg(char **argv)
 	  if(job == NULL) {
 	     printf("(%s): No such process\n", argv[1]);
 	     return;
-	  } 
+	  }
+	  //retrive the pid from the job
+	  pid = job->pid;
+	 
+	  //Resume the process by sending the SIGCONT signal to the process through kill
+	  kill(-pid, SIGCONT);
+
+	  //Change the state of the job to FG and wait until it's no longer 
+	  //a foreground process
+	  job->state = FG;
+	  waitfg(pid); 
 	}
 
 	//if it's not it's % (job ID)
