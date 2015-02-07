@@ -196,7 +196,11 @@ void eval(char *cmdline)
             setpgid(0, 0);
 	    //unblock signals
 	    sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
-            execvp(argv[0], argv);	/* if not a built in command we need to break the command down*/
+	     /* if not a built in command we need to break the command down*/    
+            if(execvp(argv[0], argv) == (-1)) {
+		printf("%s: Command not found\n", argv[0]);
+		exit(0);
+	    }
 	}
 	addjob(jobs, pid, bg ? BG : FG, cmdline);
 	//unblock signals after adding a job to jobs.
@@ -299,6 +303,15 @@ int builtin_cmd(char **argv)
 void do_bgfg(char **argv) 
 {
 
+    if(argv[1] == NULL) {
+	if(strcmp(argv[0], "bg") == 0) {
+	   printf("bg command requires PID or %%jobid argument\n");
+	}
+	else {
+	   printf("fg command requires PID or %%jobid argument\n");
+	}
+	return;
+    }
     char *args = argv[1];
     pid_t pid;
     struct job_t *job;
@@ -306,13 +319,24 @@ void do_bgfg(char **argv)
 
  	//If the first item in args is a digit
 	if(isdigit(args[0])) {
-		
-	   //getjobpid(jobs, atoi(argv[1]))->state = BG;
+
+	   job = getjobpid(jobs, atoi(argv[1]));
+
+           if(job == NULL) {
+              printf("(%s): No such process\n", argv[1]);
+              return;
+           }
+	   
 	}   
 	//a job id
-	else {
+	else if(args[0] == '%'){
 	   //Retrieve the job for the given job id
-	   job = getjobjid(jobs, (args[1] - '0'));
+	   job = getjobjid(jobs, atoi(&args[1]));
+
+	   if(job == NULL) {
+              printf("(%c): No such job\n", args[1]);
+              return;
+           }
 
 	    //retrieve the pid from the job
 	   pid = job->pid;
@@ -326,16 +350,30 @@ void do_bgfg(char **argv)
 	   //print out the message to the user
 	   printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);	
 	}
+	else {
+	    printf("argument must be PID or %%jobid\n");
+	}
 	
-    } 
+    }
+    //FG 
     else {
-	//check if the first argument in args is a digit
-	if(isdigit(args[0])){}
+	//check if the first argument in args is a digit (pid)
+	if(isdigit(args[0])){
+	  job = getjobpid(jobs, atoi(argv[1]));  
+	  if(job == NULL) {
+	     printf("(%s): No such process\n", argv[1]);
+	     return;
+	  } 
+	}
 
 	//if it's not it's % (job ID)
-	else{
+	else if(args[0] == '%'){
 	  //Retrieve the job for the given job id
 	  job = getjobjid(jobs, (args[1] - '0'));
+	  if(job == NULL) {
+	     printf("(%c): No such job\n", args[1]);
+             return;
+	  }
 	  //retrieve the pid from the job
 	  pid = job->pid;
 
@@ -347,6 +385,9 @@ void do_bgfg(char **argv)
 	
 	  //Wait while the job is still in the foreground
 	  waitfg(pid);
+	}
+	else {
+	    printf("argument must be PID or %%jobid\n");
 	}
     }
 
