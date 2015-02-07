@@ -196,6 +196,8 @@ void eval(char *cmdline)
             setpgid(0, 0);
 	    //unblock signals
 	    sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
+	    signal(SIGINT, SIG_DFL); // TJEKKA A ÞESSU !!!!!!!!
+	    signal(SIGTSTP, SIG_DFL);
 	     /* if not a built in command we need to break the command down*/    
             if(execvp(argv[0], argv) == (-1)) {
 		printf("%s: Command not found\n", argv[0]);
@@ -421,6 +423,7 @@ void sigchld_handler(int sig)
 {
 	int status;	//The status of the job
 	pid_t pid; 	//the child's pid
+	struct job_t *job;
 	/*this while loops reaps the child processes one by one. The WNOHANG option makes waitpid return
  	immediatly instead of waiting for the child. The WUNTRACED option requests a status information
 	from stopped processes so that the parent does not wait for them*/
@@ -428,12 +431,16 @@ void sigchld_handler(int sig)
 	     if(WIFEXITED(status)){	//if the child is terminated
 	     	deletejob(jobs, pid);
 	     }
-	     if (WIFSIGNALED(status)) { //if child terminated by signal 
+	     if (WIFSIGNALED(status)) { //if child terminated by signal
+		job = getjobpid(jobs, pid);
+		printf("Job [%d] (%d) terminated by signal %d\n", job->jid, job->pid, WTERMSIG(status)); 
        	        deletejob(jobs,pid);
 	     }
 	     //If a child is stopped then the state is changed to ST
 	     else if(WIFSTOPPED(status)){
-		getjobpid(jobs, pid)->state = ST;	
+		job = getjobpid(jobs, pid);
+		job->state = ST;
+		printf("Job [%d] (%d) stopped by signal %d\n", job->jid, job->pid, WSTOPSIG(status));	
 	     } 
 	}	
    	return;
