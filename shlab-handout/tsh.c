@@ -184,16 +184,26 @@ void eval(char *cmdline)
 
     //Initalize the signal set blockMask, such that all signals defined
     //in this document are included 
-    sigfillset(&blockMask);
+    if(sigfillset(&blockMask) == -1){
+	printf("Erorr!");
+	return;
+    }
     //Make sure to add SIGCHLD to the set
-    sigaddset(&blockMask, SIGCHLD);
-
+    if(sigaddset(&blockMask, SIGCHLD) == -1){
+	printf("Erorr!");
+	return;
+    }
+    
     //create the argument array
     char *argv[MAXARGS];
 
     //breake down the command line argument into the arrray
     bg = parseline(cmdline, argv);
-
+    //if parseline returns -1, error.
+    if(bg == -1){
+	printf("Erorr!");
+	return;
+    }
     //get the job structure
     struct job_t *job;
 
@@ -202,15 +212,24 @@ void eval(char *cmdline)
     if(!builtin_cmd(argv)) {
 
 	//block SIGCHLD signals before it forks the child
-	sigprocmask(SIG_BLOCK, &blockMask, NULL);
+	if(sigprocmask(SIG_BLOCK, &blockMask, NULL) == -1){
+	     printf("Erorr!");
+             return;
+        }
 	
 	if((pid = fork()) == 0) { //The child
 	   
 	    //Set the child process group id
-            setpgid(0, 0);
+            if(setpgid(0, 0) == -1){
+		printf("Erorr!");
+		return;
+	    }
 
 	    //unblock signals
-	    sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
+	    if(sigprocmask(SIG_UNBLOCK, &blockMask, NULL) == -1){
+		printf("Erorr!");
+           	return;
+            }
 
 	     //if the command is not buil tin  we need to break the command down    
             if(execvp(argv[0], argv) == (-1)) {
@@ -221,9 +240,16 @@ void eval(char *cmdline)
 	}
 
 	//Check if the process is in the foreground or background and add it accordingly
-	addjob(jobs, pid, bg ? BG : FG, cmdline);
+	//if addjob returns 0 then it tried to make to many jobs
+	if(addjob(jobs, pid, bg ? BG : FG, cmdline) == 0){
+	     printf("Erorr!");
+	     return;
+	}
 	//unblock signals after adding a job to jobs.
-	sigprocmask(SIG_UNBLOCK, &blockMask, NULL);
+	if(sigprocmask(SIG_UNBLOCK, &blockMask, NULL) == -1){
+	     printf("Erorr!");
+             return;
+        }
 
 	//If it's in the foreground we wait until it's no longer
 	//a foreground process
@@ -308,7 +334,6 @@ int parseline(const char *cmdline, char **argv)
 int builtin_cmd(char **argv) 
 {
     if(strcmp(argv[0], "quit") == 0) {
-	//dostuff
 	exit(0);
     } else if(strcmp(argv[0], "jobs") == 0) {
 	listjobs(jobs);
